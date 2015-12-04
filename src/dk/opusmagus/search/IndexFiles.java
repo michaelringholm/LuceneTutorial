@@ -1,9 +1,11 @@
 package dk.opusmagus.search;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
+import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.LongField;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
@@ -25,7 +27,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 /** Index all text files under a directory.
  * <p>
@@ -41,7 +45,7 @@ public class IndexFiles {
 	  
     String indexPath = "C:\\lucene_data\\index";
     String docsPath = "C:\\lucene_data\\docs";
-    boolean create = false; // false for update only
+    boolean create = true; // false for update only
     
     final Path docDir = Paths.get(docsPath);
     
@@ -133,24 +137,41 @@ public class IndexFiles {
   }
   
   /** Indexes a single document as multiple documents, one for each line */
-  static void indexDocByLine(IndexWriter writer, Path file, long lastModified) throws IOException {
-	  try (InputStream stream = Files.newInputStream(file)) {
-	      Document doc = new Document();
-	      Field pathField = new StringField("path", file.toString(), Field.Store.YES);
-	      doc.add(pathField);
-
-	      doc.add(new LongField("modified", lastModified, Field.Store.YES));
-	      doc.add(new TextField("contents", new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))));
-	      
-	      if (writer.getConfig().getOpenMode() == OpenMode.CREATE) {
-	        System.out.println("adding " + file);
-	        writer.addDocument(doc);
-	      } 
-	      else {
-	        System.out.println("updating " + file);
-	        writer.updateDocument(new Term("path", file.toString()), doc);
-	      }
-	  }
+  static void indexDocByLine(IndexWriter writer, Path file, long lastModified) throws IOException {      
+      List<Document> docs = new ArrayList<Document>();
+	  Field pathField = new StringField("path", file.toString(), Field.Store.YES);
+	  Field modifiedField = new LongField("modified", lastModified, Field.Store.YES);
+      List<String> lines = FileUtils.readLines(file.toFile());
+      
+      if (writer.getConfig().getOpenMode() == OpenMode.CREATE) {
+          System.out.println("adding index documents for file: " + file);
+      } 
+      else {
+    	  System.out.println("updating index documents for file: " + file);
+      }
+      
+      int count = 0;
+      for(String line : lines)
+      { 
+    	  Document doc = new Document();
+          doc.add(pathField);
+          doc.add(modifiedField);
+          
+    	  String json = line;
+          doc.add(new TextField("json", json, Store.YES));
+          docs.add(doc);
+          
+          /*count++;
+          if(count%100==0 && count!=0)
+        	  System.out.println(count + " lines processed so far...");*/
+      }
+      
+      if (writer.getConfig().getOpenMode() == OpenMode.CREATE) {
+          writer.addDocuments(docs);
+        } 
+        else {
+          writer.updateDocuments(new Term("path", file.toString()), docs);
+        }
   }  
   
   /** Indexes a single document as one document for the entire file */

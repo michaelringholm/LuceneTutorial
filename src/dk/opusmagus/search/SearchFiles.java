@@ -32,7 +32,7 @@ public class SearchFiles {
 	  System.out.println("Lucene search tutorial started...");
 	  
     String index = "C:\\lucene_data\\index";
-    String field = "contents";
+    String field = "json";
     String queries = "";
     int repeat = 0;
     boolean raw = false;
@@ -45,13 +45,15 @@ public class SearchFiles {
       
     //String line = "Transit Courier?Tourneo Courier";
     //String line = "\"KEY\":\"02|T6|A1|AV\",\"CATEGORY\":\"MO_06\",\"VALUE\":\"Transit Courier?Tourneo Courier\"";
-    String line = "ourneo Courier";
+    //String line = "ourneo Courier";
+    String line = "YOUcantfindmeeeeeee";
     QueryParser parser = new QueryParser(field, analyzer);
 	  Query query = parser.parse(line);
 	  System.out.println("Searching for: " + query.toString(field));
 	        
     Date start = new Date();
-    TopDocs topDocs = searcher.search(query, 100);
+    int maxHits = 5;
+    TopDocs topDocs = searcher.search(query, maxHits);
     ScoreDoc[] hits = topDocs.scoreDocs;
     
     for(ScoreDoc hit : hits)
@@ -61,9 +63,9 @@ public class SearchFiles {
 	    if (pathField != null)   
 	        System.out.println("path:" + pathField);
 	    
-	    IndexableField contentsField = doc.getField("contents");
+	    IndexableField contentsField = doc.getField("json");
 	    if (contentsField != null)   
-	        System.out.println("contents:" + contentsField);
+	        System.out.println("json:" + contentsField);
 	    
 	    IndexableField modifiedField = doc.getField("modified");
 	    if (modifiedField != null)   
