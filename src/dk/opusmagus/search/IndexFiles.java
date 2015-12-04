@@ -41,7 +41,7 @@ public class IndexFiles {
 	  
     String indexPath = "C:\\lucene_data\\index";
     String docsPath = "C:\\lucene_data\\docs";
-    boolean create = true; // false for update only
+    boolean create = false; // false for update only
     
     final Path docDir = Paths.get(docsPath);
     
@@ -113,25 +113,69 @@ public class IndexFiles {
    * @throws IOException If there is a low-level I/O error
    */
   static void indexDocs(final IndexWriter writer, Path path) throws IOException {
-    if (Files.isDirectory(path)) {
-      Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
-        @Override
-        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-          try {
-            indexDoc(writer, file, attrs.lastModifiedTime().toMillis());
-          } catch (IOException ignore) {
-            // don't index files that can't be read.
-          }
-          return FileVisitResult.CONTINUE;
-        }
-      });
-    } else {
-      indexDoc(writer, path, Files.getLastModifiedTime(path).toMillis());
-    }
+	  if (Files.isDirectory(path)) {
+		  Files.walkFileTree(path, new SimpleFileVisitor<Path>() {        
+			  @Override
+			  public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+				  try {
+					  indexDocByLine(writer, file, attrs.lastModifiedTime().toMillis());
+				  } 
+				  catch (IOException ignore) {
+					  // don't index files that can't be read.
+				  }
+				  return FileVisitResult.CONTINUE;
+			  }
+		  });
+	  } 
+	  else {
+		  indexDocByLine(writer, path, Files.getLastModifiedTime(path).toMillis());
+	  }
+  }
+  
+  /** Indexes a single document as multiple documents, one for each line */
+  static void indexDocByLine(IndexWriter writer, Path file, long lastModified) throws IOException {
+	  try (InputStream stream = Files.newInputStream(file)) {
+	      Document doc = new Document();
+	      Field pathField = new StringField("path", file.toString(), Field.Store.YES);
+	      doc.add(pathField);
+
+	      doc.add(new LongField("modified", lastModified, Field.Store.YES));
+	      doc.add(new TextField("contents", new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))));
+	      
+	      if (writer.getConfig().getOpenMode() == OpenMode.CREATE) {
+	        System.out.println("adding " + file);
+	        writer.addDocument(doc);
+	      } 
+	      else {
+	        System.out.println("updating " + file);
+	        writer.updateDocument(new Term("path", file.toString()), doc);
+	      }
+	  }
+  }  
+  
+  /** Indexes a single document as one document for the entire file */
+  static void indexDocByFile(IndexWriter writer, Path file, long lastModified) throws IOException {
+	  try (InputStream stream = Files.newInputStream(file)) {
+	      Document doc = new Document();
+	      Field pathField = new StringField("path", file.toString(), Field.Store.YES);
+	      doc.add(pathField);
+
+	      doc.add(new LongField("modified", lastModified, Field.Store.YES));
+	      doc.add(new TextField("contents", new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))));
+	      
+	      if (writer.getConfig().getOpenMode() == OpenMode.CREATE) {
+	        System.out.println("adding " + file);
+	        writer.addDocument(doc);
+	      } 
+	      else {
+	        System.out.println("updating " + file);
+	        writer.updateDocument(new Term("path", file.toString()), doc);
+	      }
+	  }
   }
 
   /** Indexes a single document */
-  static void indexDoc(IndexWriter writer, Path file, long lastModified) throws IOException {
+  static void indexDocOld(IndexWriter writer, Path file, long lastModified) throws IOException {
     try (InputStream stream = Files.newInputStream(file)) {
       // make a new, empty document
       Document doc = new Document();
@@ -150,7 +194,8 @@ public class IndexFiles {
       // year/month/day/hour/minutes/seconds, down the resolution you require.
       // For example the long value 2011021714 would mean
       // February 17, 2011, 2-3 PM.
-      doc.add(new LongField("modified", lastModified, Field.Store.NO));
+      //doc.add(new LongField("modified", lastModified, Field.Store.NO));
+      doc.add(new LongField("modified", lastModified, Field.Store.YES));
       
       // Add the contents of the file to a field named "contents".  Specify a Reader,
       // so that the text of the file is tokenized and indexed, but not stored.

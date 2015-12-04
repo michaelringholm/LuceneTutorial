@@ -57,15 +57,17 @@ public class SearchFiles {
     for(ScoreDoc hit : hits)
     {
 	    Document doc = searcher.doc(hit.doc);
-	    IndexableField indexableField = doc.getField("path");
-	    if (indexableField != null) 
-	    {	      
-	      String title = indexableField.name();
-	      
-	      if (title != null) {
-	        System.out.println(indexableField);
-	      }
-	    } 
+	    IndexableField pathField = doc.getField("path");
+	    if (pathField != null)   
+	        System.out.println("path:" + pathField);
+	    
+	    IndexableField contentsField = doc.getField("contents");
+	    if (contentsField != null)   
+	        System.out.println("contents:" + contentsField);
+	    
+	    IndexableField modifiedField = doc.getField("modified");
+	    if (modifiedField != null)   
+	        System.out.println("modified:" + modifiedField);	    
     }
     
     Date end = new Date();
