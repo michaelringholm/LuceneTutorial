@@ -44,8 +44,9 @@ public class IndexFiles {
   public static void main(String[] args) {
 	  
     String indexPath = "C:\\lucene_data\\index";
-    String docsPath = "C:\\lucene_data\\docs";
-    boolean create = true; // false for update only
+    //String docsPath = "C:\\lucene_data\\docs";
+    String docsPath = "C:\\data\\big\\jato";
+    boolean create = false; // false for update only
     
     final Path docDir = Paths.get(docsPath);
     

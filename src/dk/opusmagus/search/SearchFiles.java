@@ -14,6 +14,7 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexableField;
+import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
@@ -46,13 +47,21 @@ public class SearchFiles {
     //String line = "Transit Courier?Tourneo Courier";
     //String line = "\"KEY\":\"02|T6|A1|AV\",\"CATEGORY\":\"MO_06\",\"VALUE\":\"Transit Courier?Tourneo Courier\"";
     //String line = "ourneo Courier";
-    String line = "YOUcantfindmeeeeeee";
-    QueryParser parser = new QueryParser(field, analyzer);
-	  Query query = parser.parse(line);
-	  System.out.println("Searching for: " + query.toString(field));
+    //String line = "YOUcantfindmeeeeeee";
+    //String line = "Mitsubishi ASX 2WD 1.8 diesel Invite 5dr OD";
+    //String line = "itsubishi ASX 2WD 1.8 diesel Invite 5dr";
+    //String line = "nier de roue de seco";
+    //String line = "nierde roue de secu";
+    String line = "318d";
+    
+    //MultiFieldQueryParser mparser = new MultiFieldQueryParser();
+    QueryParser parser = new QueryParser(field, analyzer);    
+	Query query = parser.parse(line);
+	//parser.setPhraseSlop(120);
+	System.out.println("Searching for: " + query.toString(field));
 	        
     Date start = new Date();
-    int maxHits = 5;
+    int maxHits = 20;
     TopDocs topDocs = searcher.search(query, maxHits);
     ScoreDoc[] hits = topDocs.scoreDocs;
     
